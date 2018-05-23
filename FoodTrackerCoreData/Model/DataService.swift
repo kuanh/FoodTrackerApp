@@ -35,5 +35,5 @@ class DataService {
         return _fetchResultsController!
     }
     
-    var _fetchResultsController: NSFetchedResultsController<Meal>?
+    private var _fetchResultsController: NSFetchedResultsController<Meal>?
 }
