@@ -9,22 +9,49 @@
 import UIKit
 import CoreData
 
-class HomeTableViewController: UITableViewController {
+class HomeTableViewController: UITableViewController, UISearchBarDelegate {
+    
+    @IBOutlet weak var searchBarMeal: UISearchBar!
+    @IBOutlet var viewSearchBarMeal: UIView!
     
     var fetchresult = DataService.shared.fetchResultsController
+    
+    var filltered: [Meal] = []
+    
+    var searchActive: Bool = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
         fetchresult.delegate = self
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+        searchBarMeal.delegate = self
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        tableView.reloadData()
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchActive = true
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        searchActive = false
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchActive = false
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        guard let meal = fetchresult.fetchedObjects else { return }
+        filltered = meal.filter({ (meal) -> Bool in
+            if meal.name!.lowercased().contains(searchBar.text!.lowercased()) ||  meal.name!.uppercased().contains(searchBar.text!.uppercased()) {
+                return true
+            } else {
+                return false
+            }
+        })
         tableView.reloadData()
     }
 
@@ -39,39 +66,46 @@ class HomeTableViewController: UITableViewController {
         // #warning Incomplete implementation, return the number of rows
         if fetchresult.sections![section].numberOfObjects == 0 {
             let alert = Helper()
-            alert.showAlert(title: "Thong Bao", message: "Khong Co Du Lieu", fromController: self, preferredStyle: .alert)
+            alert.showAlert(title: "Thông Báo", message: "Không Có Dữ Liệu", fromController: self, preferredStyle: .alert)
             
         }
-        return fetchresult.sections![section].numberOfObjects
+        
+        if searchBarMeal.text != "" {
+            return filltered.count
+        }else {
+            
+            return (fetchresult.fetchedObjects?.count)!
+        }
+        
     }
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! HomeTableViewCell
 
-        let arrayMeal = fetchresult.object(at: indexPath)
         
-        configureCell(cell, withEvent: arrayMeal)
+        if searchBarMeal.text != "" {
+            let arrayMeal = filltered[indexPath.row]
+            configureCell(cell, withEvent: arrayMeal)
+        } else {
+            
+            let arrayMeal = fetchresult.object(at: indexPath)
+            
+            configureCell(cell, withEvent: arrayMeal)
+        }
+        
 
         return cell
     }
     
     
     func configureCell(_ cell: HomeTableViewCell, withEvent meal: Meal) {
+        
         cell.lbName.text = meal.name?.description
         cell.lbAddress.text = meal.address?.description
         cell.imageMeal.image = meal.image as? UIImage
         cell.lbPostTime.text = "\(meal.postTime)"
     }
-
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
-    }
-    */
-
     
     // Override to support editing the table view.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
@@ -89,20 +123,19 @@ class HomeTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        let storyBoard = UIStoryboard(name: "Main", bundle: nil)
-//        let tabbar = storyBoard.instantiateViewController(withIdentifier: "tabBar") as! UITabBarController
-//
-//        let addNew = tabbar.viewControllers![0] as! AddMealViewController
-//        tabbar.selectedIndex = 0
-//        addNew.meal = fetchresult.object(at: indexPath)
-//        self.navigationController?.pushViewController(tabbar, animated: true)
+        let storyBoard = UIStoryboard(name: "Main", bundle: nil)
+        let addVC = storyBoard.instantiateViewController(withIdentifier: "tabBar") as! AddMealViewController
+        addVC.meal = fetchresult.object(at: indexPath)
+        self.navigationController?.pushViewController(addVC, animated: true)
     }
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let view = UIView()
-        view = CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: 40)
         
-        return view
+        return viewSearchBarMeal
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 40
     }
 
     /*

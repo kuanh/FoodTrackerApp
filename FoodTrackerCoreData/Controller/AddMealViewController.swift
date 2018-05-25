@@ -14,20 +14,13 @@ class AddMealViewController: UIViewController, UIImagePickerControllerDelegate, 
     @IBOutlet weak var lbName: UITextField!
     @IBOutlet weak var lbAddress: UITextField!
     @IBOutlet weak var rating: RatingControl!
-    @IBOutlet weak var lbComment: UITextField!
+    @IBOutlet weak var lbComment: UITextView!
     
     var meal: Meal?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if meal == nil {
-            lbName.text = meal?.name
-            lbAddress.text = meal?.address
-            guard let rating = meal?.rating else { return }
-            self.rating.rating = Int(rating)
-            selectedPhoto.image = meal?.image as? UIImage
-            lbComment.isEnabled = true
-        }
+        
         
     }
     
@@ -39,6 +32,8 @@ class AddMealViewController: UIViewController, UIImagePickerControllerDelegate, 
             lbAddress.text = ""
             rating.rating = 0
             lbComment.text = ""
+            let alert = Helper()
+            alert.showAlert(title: "Thông Báo", message: "Bạn Phải Đăng Nhập", fromController: self, preferredStyle: .alert)
         }
     }
     
@@ -75,7 +70,8 @@ class AddMealViewController: UIViewController, UIImagePickerControllerDelegate, 
         meal?.rating = Int32(rating.rating)
         do {
             try context.save()
-            print("saved")
+            let alert = Helper()
+            alert.showAlert(title: "Thông Báo", message: "Lưu Thành Công", fromController: self, preferredStyle: .alert)
         } catch {
             let nserror = error as NSError
             fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
